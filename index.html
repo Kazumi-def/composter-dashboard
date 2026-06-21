@@ -6,7 +6,6 @@
     <title>Composter Web Dashboard</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mqtt/4.3.7/mqtt.min.js"></script>
     <style>
-        /* Apple/iOS Modern Color Palette - Dark Mode */
         :root {
             --glass-bg: rgba(30, 30, 35, 0.45);
             --glass-border: rgba(255, 255, 255, 0.15);
@@ -17,185 +16,42 @@
             --accent-green: #30D158;
             --accent-red: #FF453A;
             --accent-purple: #BF5AF2;
+            --accent-orange: #FF9F0A;
         }
 
         body {
-            margin: 0;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: #000;
-            color: var(--text-main);
-            min-height: 100vh;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            overflow-x: hidden;
+            margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #000; color: var(--text-main); min-height: 100vh; padding: 20px;
+            display: flex; flex-direction: column; align-items: center; overflow-x: hidden;
         }
 
-        /* Elemen Gradien Latar Belakang untuk Efek Liquid/Kaca */
         .bg-blob-1 { position: fixed; top: -10%; left: -10%; width: 50vw; height: 50vw; background: var(--accent-purple); border-radius: 50%; filter: blur(120px); opacity: 0.25; z-index: -1; }
         .bg-blob-2 { position: fixed; bottom: -10%; right: -10%; width: 60vw; height: 60vw; background: var(--accent-blue); border-radius: 50%; filter: blur(140px); opacity: 0.2; z-index: -1; }
 
-        h1 {
-            font-weight: 600;
-            letter-spacing: 0.5px;
-            margin-bottom: 30px;
-            text-align: center;
-        }
+        h1 { font-weight: 600; letter-spacing: 0.5px; margin-bottom: 30px; text-align: center; }
+        .container { display: flex; flex-wrap: wrap; justify-content: center; gap: 24px; max-width: 1000px; width: 100%; }
 
-        .container {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            gap: 24px;
-            max-width: 1000px;
-            width: 100%;
-        }
-
-        /* Glassmorphism Card Style */
         .card {
-            background: var(--glass-bg);
-            backdrop-filter: blur(24px);
-            -webkit-backdrop-filter: blur(24px);
-            border: 1px solid var(--glass-border);
-            border-radius: 28px;
-            padding: 28px;
-            box-shadow: var(--glass-shadow);
-            flex: 1;
-            min-width: 280px;
-            display: flex;
-            flex-direction: column;
+            background: var(--glass-bg); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
+            border: 1px solid var(--glass-border); border-radius: 28px; padding: 28px; box-shadow: var(--glass-shadow);
+            flex: 1; min-width: 280px; display: flex; flex-direction: column;
         }
 
-        .card h2 {
-            margin-top: 0;
-            font-size: 1.1rem;
-            font-weight: 600;
-            color: var(--text-main);
-            border-bottom: 1px solid var(--glass-border);
-            padding-bottom: 14px;
-            margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
+        .card h2 { margin-top: 0; font-size: 1.1rem; font-weight: 600; color: var(--text-main); border-bottom: 1px solid var(--glass-border); padding-bottom: 14px; margin-bottom: 20px; }
+        .data-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; font-size: 15px; color: var(--text-muted); }
+        .data-value { color: var(--text-main); font-weight: 600; font-size: 16px; background: rgba(255, 255, 255, 0.05); padding: 4px 12px; border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.05); }
 
-        .data-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 16px;
-            font-size: 15px;
-            color: var(--text-muted);
-        }
-
-        .data-value {
-            color: var(--text-main);
-            font-weight: 600;
-            font-size: 16px;
-            background: rgba(255, 255, 255, 0.05);
-            padding: 4px 12px;
-            border-radius: 12px;
-            border: 1px solid rgba(255, 255, 255, 0.05);
-        }
-
-        /* Glass Buttons dengan Transisi Glow */
-        button {
-            padding: 14px;
-            cursor: pointer;
-            border: 1px solid var(--glass-border);
-            border-radius: 16px;
-            color: white;
-            font-weight: 600;
-            font-size: 15px;
-            transition: all 0.3s ease;
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-        }
-
+        button { padding: 14px; cursor: pointer; border: 1px solid var(--glass-border); border-radius: 16px; color: white; font-weight: 600; font-size: 15px; transition: all 0.3s ease; }
         button:active { transform: scale(0.96); }
 
-        /* Tombol ON (Hijau Glow) */
-        .btn-on { 
-            background: rgba(48, 209, 88, 0.2); 
-            border-color: rgba(48, 209, 88, 0.5); 
-            width: 48%; 
-            color: var(--accent-green);
-            box-shadow: 0 0 15px rgba(48, 209, 88, 0.3);
-        }
-        .btn-on:hover { 
-            background: rgba(48, 209, 88, 0.3); 
-            box-shadow: 0 0 25px rgba(48, 209, 88, 0.7), inset 0 0 10px rgba(48, 209, 88, 0.2);
-            text-shadow: 0 0 8px rgba(48, 209, 88, 0.8);
-        }
-
-        /* Tombol OFF (Merah Glow) */
-        .btn-off { 
-            background: rgba(255, 69, 58, 0.2); 
-            border-color: rgba(255, 69, 58, 0.5); 
-            width: 48%; 
-            color: var(--accent-red);
-            box-shadow: 0 0 15px rgba(255, 69, 58, 0.3);
-        }
-        .btn-off:hover { 
-            background: rgba(255, 69, 58, 0.3); 
-            box-shadow: 0 0 25px rgba(255, 69, 58, 0.7), inset 0 0 10px rgba(255, 69, 58, 0.2);
-            text-shadow: 0 0 8px rgba(255, 69, 58, 0.8);
-        }
-
-        /* Tombol AUTO (Biru Glow) */
-        .btn-auto { 
-            background: rgba(10, 132, 255, 0.2); 
-            border-color: rgba(10, 132, 255, 0.5); 
-            width: 100%; 
-            margin-top: 16px; 
-            color: var(--accent-blue);
-            box-shadow: 0 0 15px rgba(10, 132, 255, 0.3);
-        }
-        .btn-auto:hover { 
-            background: rgba(10, 132, 255, 0.3); 
-            box-shadow: 0 0 25px rgba(10, 132, 255, 0.7), inset 0 0 10px rgba(10, 132, 255, 0.2);
-            text-shadow: 0 0 8px rgba(10, 132, 255, 0.8);
-        }
-
-        /* Tombol Update Parameter (Soft White Glow) */
-        .btn-update { 
-            background: rgba(255, 255, 255, 0.1); 
-            border-color: var(--glass-border); 
-            width: 100%; 
-            margin-top: 20px;
-        }
-        .btn-update:hover { 
-            background: rgba(255, 255, 255, 0.2); 
-            box-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
-        }
-
-        /* Glass Inputs */
+        .btn-on { background: rgba(48, 209, 88, 0.2); border-color: rgba(48, 209, 88, 0.5); width: 48%; color: var(--accent-green); }
+        .btn-off { background: rgba(255, 69, 58, 0.2); border-color: rgba(255, 69, 58, 0.5); width: 48%; color: var(--accent-red); }
+        .btn-auto { background: rgba(10, 132, 255, 0.2); border-color: rgba(10, 132, 255, 0.5); width: 100%; margin-top: 16px; color: var(--accent-blue); }
+        .btn-update { background: rgba(255, 255, 255, 0.1); width: 100%; margin-top: 20px; }
+        
         label { font-size: 14px; color: var(--text-muted); margin-bottom: 6px; display: block; margin-top: 12px;}
-        input {
-            width: calc(100% - 32px);
-            padding: 14px 16px;
-            background: rgba(0, 0, 0, 0.2);
-            border: 1px solid var(--glass-border);
-            border-radius: 16px;
-            color: white;
-            font-size: 16px;
-            outline: none;
-            transition: border-color 0.3s;
-        }
-        input:focus { border-color: var(--accent-blue); background: rgba(0, 0, 0, 0.4); }
-
-        .status-badge {
-            text-align: center;
-            padding: 12px;
-            border-radius: 14px;
-            margin-bottom: 20px;
-            font-weight: 500;
-            font-size: 14px;
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid var(--glass-border);
-            transition: all 0.3s ease;
-        }
+        input { width: calc(100% - 32px); padding: 14px 16px; background: rgba(0, 0, 0, 0.2); border: 1px solid var(--glass-border); border-radius: 16px; color: white; font-size: 16px; }
+        .status-badge { text-align: center; padding: 12px; border-radius: 14px; margin-bottom: 20px; font-weight: 500; font-size: 14px; background: rgba(255, 255, 255, 0.05); border: 1px solid var(--glass-border); }
     </style>
 </head>
 <body>
@@ -203,9 +59,15 @@
     <div class="bg-blob-1"></div>
     <div class="bg-blob-2"></div>
 
-    <h1>Composter Control</h1>
+    <h1>Composter Control [LIVE]</h1>
     
     <div class="container">
+        <div class="card" style="border-color: rgba(255, 159, 10, 0.5);">
+            <h2 style="color: var(--accent-orange);"> Diagnostik Web</h2>
+            <p style="font-size: 13px; color: var(--text-muted);">Uji apakah web ini bisa menerima data dari HiveMQ tanpa bantuan ESP32.</p>
+            <button onclick="testWeb()" style="background: rgba(255, 159, 10, 0.2); color: var(--accent-orange); width: 100%; border-color: rgba(255, 159, 10, 0.5);">Jalankan Self-Test Web</button>
+        </div>
+
         <div class="card">
             <h2> Data Sensor</h2>
             <div class="data-row">Suhu SHT31 <span id="v_temp_sht" class="data-value">-- °C</span></div>
@@ -232,10 +94,8 @@
             <h2> Parameter Suhu</h2>
             <label for="inp_on">BATAS SUHU AKTIF (ON) °C</label>
             <input type="number" id="inp_on" value="30" step="0.1">
-    
             <label for="inp_off">BATAS SUHU STANDBY (OFF) °C</label>
             <input type="number" id="inp_off" value="28" step="0.1">
-            
             <button class="btn-update" onclick="updateThreshold()">Terapkan Parameter</button>
         </div>
     </div>
@@ -243,7 +103,6 @@
 <script>
     const host = 'wss://a19d83f6ee294e8abcffa331b8309ef3.s1.eu.hivemq.cloud:8884/mqtt';
     
-    // Tambahkan keepalive dan reconnectPeriod agar web kebal terhadap sinyal putus-nyambung
     const options = {
         username: '3M_Composter_MQ',
         password: 'Meka1234',
@@ -259,34 +118,30 @@
         if (status === 'online') {
             connBadge.innerText = "Terhubung";
             connBadge.style.color = "var(--accent-green)";
-            connBadge.style.background = "rgba(48, 209, 88, 0.1)";
-            connBadge.style.borderColor = "rgba(48, 209, 88, 0.3)";
         } else if (status === 'reconnecting') {
-            connBadge.innerText = "Menghubungkan ulang...";
+            connBadge.innerText = "Reconnecting...";
             connBadge.style.color = "var(--accent-orange)";
-            connBadge.style.background = "rgba(255, 159, 10, 0.1)";
-            connBadge.style.borderColor = "rgba(255, 159, 10, 0.3)";
         } else {
             connBadge.innerText = "Terputus";
             connBadge.style.color = "var(--accent-red)";
-            connBadge.style.background = "rgba(255, 69, 58, 0.1)";
-            connBadge.style.borderColor = "rgba(255, 69, 58, 0.3)";
         }
     }
 
     client.on('connect', () => {
         setConnectionStatus('online');
         client.subscribe('composter/sensor/data');
+        console.log("Berhasil subscribe ke composter/sensor/data");
     });
 
     client.on('reconnect', () => { setConnectionStatus('reconnecting'); });
-    client.on('error', (err) => { console.error("MQTT Error: ", err); }); // HAPUS client.end() di sini
+    client.on('error', (err) => { console.error("MQTT Error: ", err); });
     client.on('close', () => { setConnectionStatus('offline'); });
     client.on('offline', () => { setConnectionStatus('offline'); });
 
     client.on('message', (topic, message) => {
         if (topic === 'composter/sensor/data') {
             try {
+                console.log("PAYLOAD DITERIMA: ", message.toString()); // LOG PENTING
                 const data = JSON.parse(message.toString());
                 
                 document.getElementById('v_temp_sht').innerText = data.temp_sht.toFixed(1) + ' °C';
@@ -297,11 +152,9 @@
                 if (data.relay_status) {
                     relayBadge.innerText = 'MENYALA';
                     relayBadge.style.color = 'var(--accent-green)';
-                    relayBadge.style.background = 'rgba(48, 209, 88, 0.15)';
                 } else {
                     relayBadge.innerText = 'STANDBY';
                     relayBadge.style.color = 'var(--accent-red)';
-                    relayBadge.style.background = 'rgba(255, 69, 58, 0.15)';
                 }
 
                 document.getElementById('v_mode').innerText = data.mode;
@@ -318,11 +171,7 @@
     });
 
     function sendCmd(cmd) {
-        if (client.connected) {
-            client.publish('composter/relay/cmd', cmd);
-        } else {
-            alert("Gagal: Sedang tidak terhubung ke server.");
-        }
+        if (client.connected) client.publish('composter/relay/cmd', cmd);
     }
 
     function updateThreshold() {
@@ -331,11 +180,21 @@
             const offVal = parseFloat(document.getElementById('inp_off').value);
             const payload = JSON.stringify({ on: onVal, off: offVal });
             client.publish('composter/threshold/cmd', payload);
+        }
+    }
+
+    // FUNGSI SELF-TEST
+    function testWeb() {
+        if (client.connected) {
+            const dummy = JSON.stringify({
+                temp_sht: 99.9, hum_sht: 99.9, temp_comp: 99.9, relay_status: true, mode: "TESTING"
+            });
+            client.publish('composter/sensor/data', dummy);
+            alert("Sinyal Test Dikirim! Jika angka di bawah berubah menjadi 99.9, berarti Web Dashboard NORMAL 100%!");
         } else {
-            alert("Gagal: Sedang tidak terhubung ke server.");
+            alert("Gagal: Web belum terhubung ke server HiveMQ.");
         }
     }
 </script>
-
 </body>
 </html>
